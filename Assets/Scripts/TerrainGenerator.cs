@@ -4,63 +4,77 @@ using UnityEngine;
 
 public class TerrainGenerator : MonoBehaviour
 {
+    public enum DrawMode { NoiseMap, ColorMap, Mesh};
+    public DrawMode drawMode;
     [Header("Terrain Settings")]
-    public int width = 256;
-    public int height = 256;
-    public float scale = 20f;
-    public float persistance = 0.5f;
-    public float lacunarity = 2f;
-    public float offsetX;
-    public float offsetY;
+    public int width;
+    public int height;
+    public float scale;
+    public int octaves;
+    [Range(0,1)]
+    public float persistance;
+    public float lacunarity;
 
-    public Mesh mesh;
-    public MeshFilter meshFilter;
+    public bool autoUpdate;
 
-    void Start()
+    public int seed;
+    public Vector2 offset;
+
+    public TerrainType[] regions;
+    public void GenerateMap()
     {
-        mesh = new Mesh();
-        meshFilter = GetComponent<MeshFilter>();
-        meshFilter.mesh = mesh;
+        float [,] map = MeshGenerator.GenerateMapMesh(width, height,seed,octaves,persistance,lacunarity, scale,offset);
 
-        offsetX = Random.Range(0f, 9999f);
-        offsetY = Random.Range(0f, 9999f);
-
-        GenerateMap();
-    }
-    void GenerateMap()
-    {
-        float [,] map = MeshGenerator.GenerateMapMesh(width, height, scale, offsetX, offsetY);
-
-        Vector3[] vertices = new Vector3[width * height];
-        int[] triangles = new int[(width - 1) * (height - 1) * 6];
-
-        int VertexIndex = 0;
-        int TriangleIndex = 0;
-
-        for(int i = 0; i < width; i++)
+        Color[] colorMap = new Color[width * height];
+        for(int y = 0; y < height; y++)
         {
-            for(int j = 0; j < height; j++)
+            for(int x = 0; x < width; x++)
             {
-                float heightValue = map[i, j];
-                vertices[VertexIndex] = new Vector3(i, heightValue, j);
-                if(i < width - 1 && j < height - 1)
+                float currentHeight = map[x, y];
+                for(int i = 0; i < regions.Length; i++)
                 {
-                    triangles[TriangleIndex + 0] = VertexIndex + width;
-                    triangles[TriangleIndex + 1] = VertexIndex + 1;
-                    triangles[TriangleIndex + 2] = VertexIndex;
-
-                    triangles[TriangleIndex + 3] = VertexIndex + width;
-                    triangles[TriangleIndex + 4] = VertexIndex + width + 1;
-                    triangles[TriangleIndex + 5] = VertexIndex + 1;
-
-                    TriangleIndex += 6;
+                    if(currentHeight <= regions[i].height)
+                    {
+                        colorMap[y * width + x] = regions[i].color;
+                        break;
+                    }
                 }
-                VertexIndex++;
             }
         }
-        mesh.Clear();
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
+        DisplayMap display = FindObjectOfType<DisplayMap>();
+        if(drawMode == DrawMode.NoiseMap)
+        {
+            display.DrawTexture(GenerateTexture.textureFromHeightMap(map));
+        }
+        else if(drawMode == DrawMode.ColorMap)
+        {
+            display.DrawTexture(GenerateTexture.TextureFromColorMap(colorMap, width, height));
+        }
+    }
+    void OnValidate()
+    {
+        if (width < 1)
+        {
+            width = 1;
+        }
+        if (height < 1)
+        {
+            height = 1;
+        }
+        if (lacunarity < 1)
+        {
+            lacunarity = 1;
+        }
+        if(octaves < 0)
+        {
+            octaves = 0;
+        }
+    }
+    [System.Serializable]
+    public struct TerrainType
+    {
+        public string name;
+        public float height;
+        public Color color;
     }
 }
