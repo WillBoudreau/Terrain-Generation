@@ -6,7 +6,6 @@ public static class GenerateMapMesh
 {
     public static MeshData GenerateTerrainMapMesh(float [,] heightMap,float heightMultiplier,AnimationCurve heightCurve, int levelOfDetail)
     {
-        AnimationCurve heightCurveCopy = new AnimationCurve(heightCurve.keys);
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
         float topLeftX = (width - 1) / -2f;
@@ -22,6 +21,7 @@ public static class GenerateMapMesh
         {
             for(int x = 0; x < width; x+= meshSimplificationIncrement)
             {
+
                 meshData.vertices[vertexIndex] = new Vector3(topLeftX + x,heightCurve.Evaluate(heightMap[x,y]) * heightMultiplier, topLeftZ - y);
                 meshData.uvs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
