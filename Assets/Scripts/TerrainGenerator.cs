@@ -4,14 +4,11 @@ using UnityEngine;
 
 public class TerrainGenerator : MonoBehaviour
 {
-    public enum DrawMode { NoiseMap, ColorMap, Mesh, FalloffMap};
+    public enum DrawMode { NoiseMap, ColorMap, Mesh};
     public DrawMode drawMode;
     [Header("Terrain Settings")]
 
-    public const int mapChunkSize = 239;
-
-    [Header("Noise Settings")]
-    public MeshGenerator.NormalizeMode normalizeMode;
+    public const int mapChunkSize = 241;
     [Range(0,6)]
     public int LOD;
     public float scale;
@@ -29,14 +26,12 @@ public class TerrainGenerator : MonoBehaviour
     public int seed;
     public Vector2 offset;
 
-    public bool useFalloff;
-
-    float[,] falloffMap;
-
     public TerrainType[] regions;
-    public void GenerateMap()
+    Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+    Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+    public void DrawMapInEditor()
     {
-        MapData mapData = GenerateMap();
+        MapData mapData = GenerateMap(Vector2.zero);
         DisplayMap display = FindObjectOfType<DisplayMap>();
         if(drawMode == DrawMode.NoiseMap)
         {
@@ -48,7 +43,7 @@ public class TerrainGenerator : MonoBehaviour
         }
         else if(drawMode == DrawMode.Mesh)
         {
-            display.DrawMesh(GenerateMapMesh.GenerateTerrainMapMesh(mapData.heightMap,mapHeightMultiplier,meshHeightCurve,LOD), GenerateTexture.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+            display.DrawMesh(GenerateMapMesh.GenerateTerrainMapMesh(mapData.heightMap,mapHeightMultiplier,meshHeightCurve,LODEditor), GenerateTexture.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
     }
 
@@ -110,27 +105,19 @@ public class TerrainGenerator : MonoBehaviour
 
     MapData GenerateMapData()
     {
-        float [,] map = MeshGenerator.GenerateMapMesh(mapChunkSize, mapChunkSize,seed,octaves,persistance,lacunarity, scale,offset);
+        float [,] map = MeshGenerator.GenerateMapMesh(mapChunkSize, mapChunkSize,seed,octaves,persistance,lacunarity, scale,centre + offset);
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
         for(int y = 0; y < mapChunkSize; y++)
         {
             for(int x = 0; x < mapChunkSize; x++)
             {
-                if(useFalloff)
-                {
-                    map[x, y] = Mathf.Clamp01(map[x, y] - falloffMap[x, y]);
-                }
                 float currentHeight = map[x, y];
                 for(int i = 0; i < regions.Length; i++)
                 {
-                    if(currentHeight >= regions[i].height)
+                    if(currentHeight <= regions[i].height)
                     {
                         colorMap[y * mapChunkSize + x] = regions[i].color;
-                        break;
-                    }
-                    else
-                    {
                         break;
                     }
                 }
@@ -160,7 +147,16 @@ public class TerrainGenerator : MonoBehaviour
         {
             octaves = 0;
         }
-        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+    }
+    struct MapThreadInfo<T>
+    {
+        public readonly Action<T> callback;
+        public readonly T parameter;
+        public MapThreadInfo(Action<T> callback, T parameter)
+        {
+            this.callback = callback;
+            this.parameter = parameter;
+        }
     }
     [System.Serializable]
     public struct TerrainType
@@ -168,5 +164,15 @@ public class TerrainGenerator : MonoBehaviour
         public string name;
         public float height;
         public Color color;
+    }
+    public struct MapData
+    {
+        public readonly float[,] heightMap;
+        public readonly Color[] colorMap;
+        public MapData(float[,] heightMap, Color[] colorMap)
+        {
+            this.heightMap = heightMap;
+            this.colorMap = colorMap;
+        }
     }
 }
