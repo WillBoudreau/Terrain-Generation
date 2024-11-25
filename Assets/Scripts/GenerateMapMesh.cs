@@ -6,7 +6,11 @@ public static class GenerateMapMesh
 {
     public static MeshData GenerateTerrainMapMesh(float [,] heightMap,float heightMultiplier,AnimationCurve heightCurve, int levelOfDetail)
     {
-        AnimationCurve heightCurveCopy = new AnimationCurve(heightCurve.keys);
+        int width = heightMap.GetLength(0);
+        int height = heightMap.GetLength(1);
+        float topLeftX = (width - 1) / -2f;
+        float topLeftZ = (height - 1) / 2f;
+
         int meshSimplificationIncrement = (levelOfDetail == 0)? 1 : levelOfDetail * 2;
         int borderedSize = heightMap.GetLength(0);
         int meshSize = borderedSize - 2 * meshSimplificationIncrement;
@@ -27,7 +31,9 @@ public static class GenerateMapMesh
         {
             for(int x = 0; x < borderedSize; x+= meshSimplificationIncrement)
             {
-                bool isBorderVertex = y == 0 || y == borderedSize - 1 || x == 0 || x == borderedSize - 1;
+
+                meshData.vertices[vertexIndex] = new Vector3(topLeftX + x,heightCurve.Evaluate(heightMap[x,y]) * heightMultiplier, topLeftZ - y);
+                meshData.uvs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
                 if(isBorderVertex)
                 {

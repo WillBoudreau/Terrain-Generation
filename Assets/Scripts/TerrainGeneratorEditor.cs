@@ -15,13 +15,13 @@ public class TerrainGeneratorEditor : Editor
             if (terrainGen.autoUpdate)
             {
                 Debug.Log("Generating map");
-                terrainGen.DrawMapInEditor();
+                terrainGen.GenerateMap();
             }
         }
 
         if (GUILayout.Button("Generate"))
         {
-            terrainGen.DrawMapInEditor();
+            terrainGen.GenerateMap();
         }
     }
 }
