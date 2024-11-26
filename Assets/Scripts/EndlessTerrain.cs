@@ -9,7 +9,7 @@ public class EndlessTerrain : MonoBehaviour
     int chunkSize;
     int chunksVisibleInViewDst;
     void Start(){
-        chunkSize = MapGenerator.mapChunkSize - 1;
+        // chunkSize = .mapChunkSize - 1;
         chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / chunkSize);
     }
 }
