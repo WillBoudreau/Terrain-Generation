@@ -9,8 +9,8 @@ public class UIBehaviour : MonoBehaviour
     [SerializeField] private Slider Scale;
     [SerializeField] private Slider octaves;
     [SerializeField] private Slider persistance;
+    [SerializeField] private Slider lacturnity;
     [SerializeField] private Slider mapHeightMultiplier;
-    [SerializeField] private Button generateButton;
 
     public void SetScale()
     {
@@ -30,10 +30,24 @@ public class UIBehaviour : MonoBehaviour
     }
     public void SetLacunarity()
     {
-        terrainGenerator.lacunarity = mapHeightMultiplier.value;
+        terrainGenerator.lacunarity = lacturnity.value;
     }
     public void GenerateMap()
     {
+        terrainGenerator.GenerateMap();
+    }
+    public void Reset()
+    {
+        Scale.value = 0;
+        octaves.value = 0;
+        persistance.value = 0;
+        lacturnity.value = 0;
+        mapHeightMultiplier.value = 0;
+        terrainGenerator.scale = 0;
+        terrainGenerator.octaves = 0;
+        terrainGenerator.persistance = 0;
+        terrainGenerator.lacunarity = 0;
+        terrainGenerator.mapHeightMultiplier = 0;
         terrainGenerator.GenerateMap();
     }
 }
